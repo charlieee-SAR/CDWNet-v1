@@ -1,0 +1,31 @@
+name: cdwnet
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch=2.1.2
+  - torchvision=0.16.2
+  - pytorch-cuda=12.1
+  - numpy
+  - scipy
+  - matplotlib
+  - pillow
+  - opencv
+  - pip:
+      - openmim
+      - mmcv-full==1.7.2
+      - tifffile
+      - imagecodecs
+      - packaging
+      - timm
+      - fvcore
+      - einops
+      - yacs
+      - prettytable
+      - termcolor
+      - seaborn
+      - shapely
+      - pywavelets

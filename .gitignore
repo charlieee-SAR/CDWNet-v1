@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*:Zone.Identifier
+
+# Build / packaging
+.eggs/
+*.egg-info/
+build/
+dist/
+
+# Logs and experiment outputs
+*.log
+*.log.json
+*.tmp
+*.out
+segmentation/work_dirs/
+
+# Data and large assets
+segmentation/data/
+segmentation/guangzhou/
+segmentation/pretrained/*.pth
+segmentation/pretrained/*.pt
+segmentation/**/*.ovr
+segmentation/**/*.vat.dbf
+segmentation/**/*.vat.cpg
+*.npy
+
+# Figures generated during training
+*.png
+!README_assets/*.png
+
+# Local notes not intended for public release
+dumpsite*.md
+fig*.md
+method.md
+PROJECT_LAYOUT.md
+START_HERE.md
