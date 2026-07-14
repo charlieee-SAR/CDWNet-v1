@@ -1,4 +1,5 @@
 import os.path as osp
+import random
 
 import mmcv
 from mmcv.utils import print_log
@@ -42,7 +43,11 @@ class MultiSourceTifDataset(CustomDataset):
                  classes=None,
                  palette=None,
                  gt_seg_map_loader_cfg=None,
-                 file_client_args=dict(backend='disk')):
+                 file_client_args=dict(backend='disk'),
+                 auto_split=False,
+                 split_role='train',
+                 val_split_ratio=0.1,
+                 split_seed=42):
         # Resolve directories before calling super().__init__ because
         # CustomDataset.__init__ immediately triggers load_annotations().
         resolved_optical_dir = optical_dir
@@ -61,6 +66,10 @@ class MultiSourceTifDataset(CustomDataset):
 
         self.sar_dir = resolved_sar_dir
         self.sar_suffix = sar_suffix
+        self.auto_split = bool(auto_split)
+        self.split_role = split_role
+        self.val_split_ratio = float(val_split_ratio)
+        self.split_seed = int(split_seed)
         super().__init__(
             pipeline=pipeline,
             img_dir=resolved_optical_dir,
@@ -128,10 +137,44 @@ class MultiSourceTifDataset(CustomDataset):
 
             img_infos = sorted(img_infos, key=lambda x: x['filename'])
 
+        if self.auto_split:
+            img_infos = self._apply_auto_split(img_infos)
+
         print_log(
             f'Loaded {len(img_infos)} paired multi-source images',
             logger=get_root_logger())
         return img_infos
+
+    def _apply_auto_split(self, img_infos):
+        if self.split_role not in ('train', 'val'):
+            raise ValueError(
+                f'Unsupported split_role={self.split_role!r}. '
+                'Expected "train" or "val".')
+        if not 0.0 < self.val_split_ratio < 1.0:
+            raise ValueError(
+                f'val_split_ratio must be in (0, 1), got {self.val_split_ratio}.')
+
+        indices = list(range(len(img_infos)))
+        rng = random.Random(self.split_seed)
+        rng.shuffle(indices)
+        num_val = max(1, int(round(len(indices) * self.val_split_ratio)))
+        val_indices = set(indices[:num_val])
+
+        if self.split_role == 'train':
+            split_infos = [
+                info for idx, info in enumerate(img_infos) if idx not in val_indices
+            ]
+        else:
+            split_infos = [
+                info for idx, info in enumerate(img_infos) if idx in val_indices
+            ]
+
+        print_log(
+            f'Applied auto split: role={self.split_role}, '
+            f'val_split_ratio={self.val_split_ratio}, seed={self.split_seed}, '
+            f'count={len(split_infos)}',
+            logger=get_root_logger())
+        return split_infos
 
     def pre_pipeline(self, results):
         results['seg_fields'] = []
